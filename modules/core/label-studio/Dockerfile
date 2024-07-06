@@ -24,9 +24,9 @@ RUN --mount=type=cache,target=${YARN_CACHE_FOLDER},sharing=locked \
 
 COPY web .
 COPY pyproject.toml ../pyproject.toml
+
 RUN --mount=type=cache,target=${YARN_CACHE_FOLDER},sharing=locked \
-    --mount=type=bind,source=.git,target=../.git \
-    yarn run build && yarn version:libs
+    yarn run build && if [ -d ../.git ]; then yarn version:libs; fi
 
 FROM ubuntu:22.04
 
@@ -44,12 +44,12 @@ WORKDIR $LS_DIR
 
 # install packages
 RUN set -eux \
- && apt-get update \
- && apt-get install --no-install-recommends --no-install-suggests -y \
+    && apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests -y \
     build-essential postgresql-client libmysqlclient-dev mysql-client python3-pip python3-dev \
     git libxml2-dev libxslt-dev zlib1g-dev gnupg curl lsb-release libpq-dev dnsutils vim && \
     apt-get purge --assume-yes --auto-remove --option APT::AutoRemove::RecommendsImportant=false \
-     --option APT::AutoRemove::SuggestsImportant=false && rm -rf /var/lib/apt/lists/* /tmp/*
+    --option APT::AutoRemove::SuggestsImportant=false && rm -rf /var/lib/apt/lists/* /tmp/*
 
 RUN --mount=type=cache,target=$PIP_CACHE_DIR,uid=1001,gid=0 \
     pip3 install --upgrade pip setuptools && pip3 install poetry uwsgi uwsgitop
@@ -60,7 +60,7 @@ RUN set -eux; \
     echo "deb https://nginx.org/packages/mainline/ubuntu/ $(lsb_release -cs) nginx" >> /etc/apt/sources.list && \
     apt-get update && apt-get install -y nginx && \
     apt-get purge --assume-yes --auto-remove --option APT::AutoRemove::RecommendsImportant=false \
-     --option APT::AutoRemove::SuggestsImportant=false && rm -rf /var/lib/apt/lists/* /tmp/* && \
+    --option APT::AutoRemove::SuggestsImportant=false && rm -rf /var/lib/apt/lists/* /tmp/* && \
     nginx -v
 
 COPY --chown=1001:0 deploy/default.conf /etc/nginx/nginx.conf
