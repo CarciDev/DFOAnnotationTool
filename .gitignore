@@ -1,0 +1,30 @@
+
+.DS_Store
+demo/test-measurements.png
+demo/test.csv
+.vscode/settings.json
+demo/mmx_output format notes_230317.xlsx
+.vscode/settings.json
+
+# Logs
+logs
+*.log
+.DS_Store
+
+# conda
+.conda
+
+# VS
+.vscode
+
+# build files
+morphometrix/build
+morphometrix/dist
+*.dmg
+*.exe
+*.app
+
+# cache
+__pycache__
+morphometrix/__pycache__
+*.pyc
