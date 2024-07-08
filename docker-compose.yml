@@ -18,7 +18,8 @@ services:
       - ./modules/core/label-studio/deploy/nginx/certs:/certs:ro
     command: nginx
     networks:
-      - shared-network
+      shared-network:
+        ipv4_address: 172.25.0.2
 
   app:
     stdin_open: true
@@ -44,7 +45,8 @@ services:
       - ./modules/core/label-studio/mydata:/label-studio/data:rw
     command: label-studio-uwsgi
     networks:
-      - shared-network
+      shared-network:
+        ipv4_address: 172.25.0.3
 
   db:
     image: postgres:11.5
@@ -56,7 +58,8 @@ services:
       - ${POSTGRES_DATA_DIR:-./modules/core/label-studio/postgres-data}:/var/lib/postgresql/data
       - ./modules/core/label-studio/deploy/pgsql/certs:/var/lib/postgresql/certs:ro
     networks:
-      - shared-network
+      shared-network:
+        ipv4_address: 172.25.0.4
 
   mmdetection-3:
     container_name: mmdetection-3
@@ -76,8 +79,8 @@ services:
       - CONFIG_FILE=yolov3_mobilenetv2_8xb24-320-300e_coco.py
       - DEVICE=cpu
       - SCORE_THRESHOLD=0.5
-      - LABEL_STUDIO_URL=
-      - LABEL_STUDIO_API_KEY=
+      - LABEL_STUDIO_URL=http://172.25.0.2:8085/
+      - LABEL_STUDIO_API_KEY=dc8a69f107b35394c21a81542b4e766199975028
       - AWS_ACCESS_KEY_ID=
       - AWS_SECRET_ACCESS_KEY=
     ports:
@@ -85,8 +88,12 @@ services:
     volumes:
       - ./modules/ml-integration/label-studio-ml/label_studio_ml/examples/mmdetection-3/data/server:/data
     networks:
-      - shared-network
+      shared-network:
+        ipv4_address: 172.25.0.5
 
 networks:
   shared-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
