@@ -1,0 +1,99 @@
+version: "3.9"
+
+services:
+  nginx:
+    build: 
+      context: ./modules/core/label-studio  # Ensure this points to the directory containing the Dockerfile for nginx
+    image: heartexlabs/label-studio:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8085"
+      - "8081:8086"
+    depends_on:
+      - app
+    environment:
+      - LABEL_STUDIO_HOST=${LABEL_STUDIO_HOST:-}
+    volumes:
+      - ./modules/core/label-studio/mydata:/label-studio/data:rw
+      - ./modules/core/label-studio/deploy/nginx/certs:/certs:ro
+    command: nginx
+    networks:
+      shared-network:
+        ipv4_address: 172.25.0.2
+
+  app:
+    stdin_open: true
+    tty: true
+    build: 
+      context: ./modules/core/label-studio  # Ensure this points to the directory containing the Dockerfile for app
+    image: heartexlabs/label-studio:latest
+    restart: unless-stopped
+    expose:
+      - "8000"
+    depends_on:
+      - db
+    environment:
+      - DJANGO_DB=default
+      - POSTGRE_NAME=postgres
+      - POSTGRE_USER=postgres
+      - POSTGRE_PASSWORD=
+      - POSTGRE_PORT=5432
+      - POSTGRE_HOST=db
+      - LABEL_STUDIO_HOST=${LABEL_STUDIO_HOST:-}
+      - JSON_LOG=1
+    volumes:
+      - ./modules/core/label-studio/mydata:/label-studio/data:rw
+    command: label-studio-uwsgi
+    networks:
+      shared-network:
+        ipv4_address: 172.25.0.3
+
+  db:
+    image: postgres:11.5
+    hostname: db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - ${POSTGRES_DATA_DIR:-./modules/core/label-studio/postgres-data}:/var/lib/postgresql/data
+      - ./modules/core/label-studio/deploy/pgsql/certs:/var/lib/postgresql/certs:ro
+    networks:
+      shared-network:
+        ipv4_address: 172.25.0.4
+
+  mmdetection-3:
+    container_name: mmdetection-3
+    image: heartexlabs/label-studio-ml-backend:mmdetection3-master
+    build:
+      context: ./modules/ml-integration/label-studio-ml/label_studio_ml/examples/mmdetection-3  # Ensure this points to the directory containing the Dockerfile for mmdetection-3
+      args:
+        TEST_ENV: ${TEST_ENV}
+    environment:
+      - BASIC_AUTH_USER=
+      - BASIC_AUTH_PASS=
+      - LOG_LEVEL=DEBUG
+      - WORKERS=1
+      - THREADS=8
+      - MODEL_DIR=/data/models
+      - CHECKPOINT_FILE=yolov3_mobilenetv2_320_300e_coco_20210719_215349-d18dff72.pth
+      - CONFIG_FILE=yolov3_mobilenetv2_8xb24-320-300e_coco.py
+      - DEVICE=cpu
+      - SCORE_THRESHOLD=0.5
+      - LABEL_STUDIO_URL=http://172.25.0.2:8085/
+      - LABEL_STUDIO_API_KEY=dc8a69f107b35394c21a81542b4e766199975028
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./modules/ml-integration/label-studio-ml/label_studio_ml/examples/mmdetection-3/data/server:/data
+    networks:
+      shared-network:
+        ipv4_address: 172.25.0.5
+
+networks:
+  shared-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
