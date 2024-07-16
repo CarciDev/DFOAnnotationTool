@@ -1,6 +1,8 @@
 import { inject } from "mobx-react";
 import { destroy, getRoot, getType, types } from "mobx-state-tree";
 
+import { getActualZoomingPosition } from "../../../utils/image"; //adding this to get our conversion.
+
 import ImageView from "../../../components/ImageView/ImageView";
 import { customTypes } from "../../../core/CustomTypes";
 import Registry from "../../../core/Registry";
@@ -374,9 +376,9 @@ const Model = types
       return useRawResult
         ? structuredClone(region._rawResult)
         : {
-            ...imageDimension,
-            value,
-          };
+          ...imageDimension,
+          value,
+        };
     },
 
     /**
@@ -858,10 +860,12 @@ const Model = types
           naturalWidth: self.naturalWidth,
           naturalHeight: self.naturalHeight,
         });
+        console.log("width, height:", self.stageWidth, self.stageHeight);
+        console.log("naturalWidth, naturalHeigh:", self.naturalWidth, self.naturalHeight);
       }
     },
 
-    setZoomPosition(x, y) {
+    async setZoomPosition(x, y) {
       const [width, height] = isFF(FF_DEV_3377)
         ? [self.canvasSize.width, self.canvasSize.height]
         : [self.containerWidth, self.containerHeight];
@@ -873,6 +877,42 @@ const Model = types
 
       self.zoomingPositionX = clamp(x, minX, 0);
       self.zoomingPositionY = clamp(y, minY, 0);
+      //remark: this will give us the zoomed position, and is functional
+      console.log("zoomPosX=", self.zoomingPositionX);
+      console.log("zoomPosY=", self.zoomingPositionY);
+
+
+      // Convert zooming position to actual pixel position
+      const [actualX, actualY] = getActualZoomingPosition(
+        self.naturalWidth,
+        self.naturalHeight,
+        self.containerWidth,
+        self.containerHeight,
+        self.zoomingPositionX,
+        self.zoomingPositionY
+        // self.obj.imageRef.naturalWidth,
+        // self.obj.imageRef.naturalHeight,
+        // self.obj.imageRef.width,
+        // self.obj.imageRef.height,
+        // self.obj.zoomingPositionX,
+        // self.obj.zoomingPositionY,
+      );
+      //todo: fix authentication token being hardcoded.
+      const response = await fetch('/api/dfo/zoomdata/', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token dc8a69f107b35394c21a81542b4e766199975028',
+        },
+        body: JSON.stringify({
+          zoom_position_x: actualX,
+          zoom_position_y: actualY,
+          zoom_scale: self.zoomScale,
+        }),
+      });
+      const data = await response.json();
+      console.log(data);
+      //console.log(`Actual Pixel Position: (${actualX}, ${actualY})`);
     },
 
     resetZoomPositionToCenter() {
@@ -1002,15 +1042,15 @@ const Model = types
         this.setZoomPosition(
           self.zoomingPositionY * ratioK,
           self.stageComponentSize.height -
-            self.zoomingPositionX * ratioK -
-            self.stageComponentSize.height * self.zoomScale,
+          self.zoomingPositionX * ratioK -
+          self.stageComponentSize.height * self.zoomScale,
         );
       }
       if (degree === 90) {
         this.setZoomPosition(
           self.stageComponentSize.width -
-            self.zoomingPositionY * ratioK -
-            self.stageComponentSize.width * self.zoomScale,
+          self.zoomingPositionY * ratioK -
+          self.stageComponentSize.width * self.zoomScale,
           self.zoomingPositionX * ratioK,
         );
       }

@@ -3,27 +3,28 @@ This is the LabelStudioController module.
 It contains the controller class for managing Label Studio connectivity with the API and front-end react components (runtime).
 Will be used to fetch information that will be used for the pyQt GUI.
 """
+import requests
+API_TOKEN = "dc8a69f107b35394c21a81542b4e766199975028"
+API_URL = "http://localhost:8080/api/dfo"
+
+headers = {
+"Authorization": f"Token {API_TOKEN}"
+}
 
 class LabelStudioController:
-    _instance = None
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super().__new__(cls, *args, **kwargs)
-        return cls._instance
-    
-    runtimeAnnotationsArray = []
-
-    apiKey = ""
-
-    def fetchCurrentAnnotations(self):
+    def fetchCurrentTaskAnnotations(self):
         """
         Fetches the current annotations from the RegionStore.js
         1. Fetches the annotations from the RegionStore.js from custom defined function x. 
         2. Returns the annotations array.
         3. Sort by score.
         """
-        pass
+        # from .RegionStore import getAnnotations
+
+        # self.runtimeAnnotationsArray = getAnnotations()
+        # self.runtimeAnnotationsArray.sort(key=lambda annotation: annotation['score'], reverse=True)
+        # return self.runtimeAnnotationsArray
     
     def getHighestScoredAnnotation(self):
         """
@@ -53,11 +54,18 @@ class LabelStudioController:
         """
         pass
     
-    def getZoomInformation(self):
+    def getZoomInformation():
         """
-        Fetches the zoom information from function y in the Zoom.jsx.
+        Fetches the zoom information from the custom API.
         """
-        pass
+        response = requests.get(API_URL + "/zoomdata/", headers=headers)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            data = response.json()
+            print(data)
+        else:
+            print(f"Request failed with status code {response.status_code}: {response.text}")
 
     def createProject(self):
         """
@@ -90,7 +98,3 @@ class LabelStudioController:
         from https://labelstud.io/api#tag/Export
         """
         pass
-
-    
-    
-
