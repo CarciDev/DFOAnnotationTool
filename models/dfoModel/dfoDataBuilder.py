@@ -118,7 +118,7 @@ class DfoDataBuilder:
             bottom_left_geo = self.pixel_to_geolocation(x1, y2, jgw_values)
 
             transformed_boxes.append({
-                "id": box["id"],
+                "annotationId": box["annotationId"],
                 "geo_coordinates": [
                     top_left_geo,
                     top_right_geo,
@@ -202,12 +202,13 @@ class DfoDataBuilder:
                 if 'annotations' in project:
                     for annotation in project['annotations']:
                         # Check if 'result' key exists in each annotation
+                        #taskId = annotation.get('id') # retrieve the task id
                         if 'result' in annotation:
                             for result in annotation['result']:
                                 # Extract Annotation Attributes:
                                 original_width = result.get('original_width')
                                 original_height = result.get('original_height')
-                                id = result.get('id')
+                                annotationId = result.get('id')
 
                                 #Within 'Value' dictionary of Annotations's key
                                 value = result.get('value', {})
@@ -221,7 +222,7 @@ class DfoDataBuilder:
 
                                 # Store extracted attributes in a dictionary
                                 extracted = {
-                                    'id': id,
+                                    'annotationId': annotationId,
                                     'x1': geoPolygon.get('x1'),
                                     'y1': geoPolygon.get('y1'),
                                     'x2': geoPolygon.get('x2'),
@@ -231,8 +232,11 @@ class DfoDataBuilder:
         
         if not project_found:
             raise ValueError(f"Project ID {self.projectId} not found in the provided data.")
-        
-        print(results)
+        # project_data = {
+        # 'projectId': self.projectId,
+        # 'annotations': results
+        # }
+        # print(project_data)
         return results
 
 def main():
