@@ -119,6 +119,7 @@ class DfoDataBuilder:
 
             transformed_boxes.append({
                 "annotationId": box["annotationId"],
+                "taskId": box["currentTaskId"],
                 "geo_coordinates": [
                     top_left_geo,
                     top_right_geo,
@@ -196,11 +197,12 @@ class DfoDataBuilder:
 
         # Check if self.projectId exists in projectData
         project_found = False
-        for project in projectData:
-            if isinstance(project, dict) and 'id' in project and self.projectId == project['id']:
+        for task in projectData:
+            # if isinstance(task, dict) and 'id' in task and self.projectId == task['id']: #this is the task, not the project.
                 project_found = True
-                if 'annotations' in project:
-                    for annotation in project['annotations']:
+                currentTaskId = task.get('id')
+                if 'annotations' in task:
+                    for annotation in task['annotations']:
                         # Check if 'result' key exists in each annotation
                         #taskId = annotation.get('id') # retrieve the task id
                         if 'result' in annotation:
@@ -223,12 +225,16 @@ class DfoDataBuilder:
                                 # Store extracted attributes in a dictionary
                                 extracted = {
                                     'annotationId': annotationId,
+                                    'currentTaskId': currentTaskId,
                                     'x1': geoPolygon.get('x1'),
                                     'y1': geoPolygon.get('y1'),
                                     'x2': geoPolygon.get('x2'),
                                     'y2': geoPolygon.get('y2'),
                                 }
                                 results.append(extracted)
+                
+                        
+
         
         if not project_found:
             raise ValueError(f"Project ID {self.projectId} not found in the provided data.")
