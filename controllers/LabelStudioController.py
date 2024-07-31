@@ -43,7 +43,7 @@ class LabelStudioController:
         Hides annotations below a certain threshold.
         
         For all annotations in the annotation array, if the score is below the threshold, hide the annotation.
-        For each annotation, call the hideAnnotation function, located in the RegionStore.js.
+        For each annotation, call the toggleVisibility function, located in the RegionStore.js.
 
         """
         pass
