@@ -16,7 +16,7 @@ class ShapefileBuilder:
         # Group annotations by taskId
         grouped_annotations = {}
         for annotation in geo_referenced_annotations:
-            task_id = annotation["taskId"]
+            task_id = annotation["annotationId"]
             if task_id not in grouped_annotations:
                 grouped_annotations[task_id] = []
             grouped_annotations[task_id].append(annotation)

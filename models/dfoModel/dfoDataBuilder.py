@@ -30,7 +30,7 @@ In the future, this class will have the ability to modify the custom attributes 
 - Comment
 """
 import json
-from label_studio_sdk.client import LabelStudio
+#from label_studio_sdk.client import LabelStudio
 import requests
 
 class DfoDataBuilder:
@@ -240,7 +240,7 @@ class DfoDataBuilder:
         return results
 
 def main():
-    DfoDataBuilder(1, "dc8a69f107b35394c21a81542b4e766199975028", "http://localhost:8080")
+    DfoDataBuilder(1, "3ba72f8c09ddfe2c6f41975fe39b63e45e0ebd32", "http://localhost:8080")
 
 if __name__ == "__main__":
     main()
