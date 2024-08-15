@@ -511,6 +511,20 @@ class imwin(QGraphicsView):
         delta = newPos - oldPos
         self.translate(delta.x(), delta.y())  #Move scene to old position
         
+    def set_zoom(self, zoom_factor, zoom_center=None):
+        if zoom_center is None:
+            zoom_center = self.viewport().rect().center()
+        
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        
+        old_pos = self.mapToScene(zoom_center)
+        self.scale(zoom_factor, zoom_factor)
+        new_pos = self.mapToScene(zoom_center)
+        
+        delta = new_pos - old_pos
+        self.translate(delta.x(), delta.y())
+        
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and PyInstaller """

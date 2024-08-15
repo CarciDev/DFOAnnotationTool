@@ -159,7 +159,39 @@ class Window(QWidget):
 #https://stackoverflow.com/questions/27109629/how-can-i-resize-the-main-window-depending-on-screen-resolution-using-pyqt
 class MainWindow(QMainWindow):
 
-    def __init__(self, parent = None):
+    def initialize_program(self, image_path, id=None, focal_length=None, altitude=None, jgw_file=None, zoom_factor=1.0, zoom_center=None):
+        # Set image
+        self.file_open(image_path)
+        
+        # Set ID
+        if id is not None:
+            self.subWin.id.setText(str(id))
+        
+        # Set focal length
+        if focal_length is not None:
+            self.subWin.focal.setText(str(focal_length))
+        
+        # Set altitude
+        if altitude is not None:
+            self.subWin.altitude.setText(str(altitude))
+        
+        # Process JGW file and set pixel dimension
+        if jgw_file:
+            pixel_dim = self.process_jgw_file(jgw_file)
+            self.subWin.pixeldim.setText(str(pixel_dim))
+        
+        # Set zoom
+        if zoom_factor != 1.0 or zoom_center is not None:
+            self.iw.set_zoom(zoom_factor, zoom_center)
+
+    def process_jgw_file(self, jgw_file):
+        # Read the JGW file and calculate pixel dimension
+        with open(jgw_file, 'r') as f:
+            lines = f.readlines()
+        pixel_dim = abs(float(lines[0]))  # Assuming the first line contains the pixel size
+        return pixel_dim
+
+    def __init__(self, parent=None, image_path=None, id=None, focal_length=None, altitude=None, pixel_dim=None):
         super(MainWindow, self).__init__()
         self.setWindowIcon(QIcon(resource_path("icon.PNG")))
         self.setWindowTitle("MorphoMetriX")
@@ -175,7 +207,19 @@ class MainWindow(QMainWindow):
         self.iw = imwin()           # Image window
         self.subWin = Window(self.iw)
         self.setCentralWidget(self.iw)
-        
+
+        # Set initial values if provided
+        if image_path:
+           self.file_open(image_path)
+        if id:
+            self.subWin.id.setText(str(id))
+        if focal_length:
+            self.subWin.focal.setText(str(focal_length))
+        if altitude:
+            self.subWin.altitude.setText(str(altitude))
+        if pixel_dim:
+            self.subWin.pixeldim.setText(str(pixel_dim))
+
         #Stacked dock widgets
         docked1 = QDockWidget("", self)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, docked1)
@@ -253,10 +297,13 @@ class MainWindow(QMainWindow):
 
     # New Project
     # Set all defaults and clear stored values
-    def file_open(self):
-        self.image_name = QFileDialog.getOpenFileName(self, 'Open File')
+    def file_open(self, image_path=None):
+        if image_path:
+            self.image_name = (image_path, '')
+        else:
+            self.image_name = QFileDialog.getOpenFileName(self, 'Open File')
 
-        if self.image_name[0]: # If user selected a file, create new project
+        if self.image_name[0]:
             self.iw.new_project(self.image_name[0])
             self.statusbar.showMessage('Select a measurement to make from the toolbar')
             self.enable_all_measurements()
@@ -414,14 +461,22 @@ def except_hook(exc_type, exc_value, exc_tb):
     QApplication.quit() # Quit application
 
 
-def main():
+def main(image_path=None, id=None, focal_length=None, altitude=None, pixel_dim=None):
     sys.excepthook = except_hook
     app = QApplication(sys.argv)
-    main = MainWindow()
-    main.show()
-    app.exec()
-    sys.exit()
-
+    # main_window = MainWindow()
+    # main_window.initialize_program(
+    #     image_path="path/to/your/image.jpg",
+    #     id=1234,
+    #     focal_length=25,
+    #     altitude=50,
+    #     jgw_file="path/to/your/worldfile.jgw",
+    #     zoom_factor=1.5,
+    #     zoom_center=(500, 500)
+    # )
+    main_window = MainWindow(image_path=image_path, id=id, focal_length=focal_length, altitude=altitude, pixel_dim=pixel_dim)
+    main_window.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()
