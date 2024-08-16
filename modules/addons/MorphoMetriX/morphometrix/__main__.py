@@ -6,7 +6,7 @@ import webbrowser
 from graphicsview import imwin, resource_path
 
 from PySide6 import QtGui, QtCore
-from PySide6.QtWidgets import QTabWidget, QSlider ,QColorDialog ,QComboBox, QMainWindow, QApplication,  QWidget, QToolBar, QPushButton, QLabel, QLineEdit, QPlainTextEdit, QGridLayout, QFileDialog, QMessageBox, QInputDialog, QDockWidget, QSizePolicy, QRadioButton
+from PySide6.QtWidgets import QTabWidget, QSlider ,QColorDialog ,QComboBox, QMainWindow, QApplication,  QWidget, QToolBar, QPushButton, QLabel, QLineEdit, QPlainTextEdit, QGridLayout, QFileDialog, QMessageBox, QInputDialog, QDockWidget, QSizePolicy, QRadioButton, QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QPushButton
 from PySide6.QtGui import QShortcut, QIcon, QIntValidator, QDoubleValidator
 from PySide6.QtCore import Qt
 
@@ -391,45 +391,72 @@ class MainWindow(QMainWindow):
     # Call undo function within graphicsview class
     def undo(self):
         self.iw.undo()
+
+    def show_measurement_table(self):
+        pixeldim = float(self.subWin.pixeldim.text())
+        altitude = float(self.subWin.altitude.text())
+        focal = float(self.subWin.focal.text())
+        m = pixeldim * (altitude / focal)
+
+        self.iw.calculate_widths(self.subWin.side_bias.currentText())
+        pixel_measurements, unit_measurements = self.iw.get_measurement_names_and_values(m)
+
+        # Create the table
+        table = QTableWidget()
+        table.setColumnCount(3)
+        table.setHorizontalHeaderLabels(["Measurement", "Value", "Unit"])
+
+        # Populate the table with metadata
+        meta_data = [
+            ['Image ID', self.subWin.id.text(), "Metadata"],
+            ['Image Path', self.image_name[0], "Metadata"],
+            ['Focal Length', str(focal), "Metadata"],
+            ['Altitude', str(altitude), "Metadata"],
+            ['Pixel Dimension', str(pixeldim), "Metadata"],
+            ['Mirror Side', self.subWin.side_bias.currentText(), "Metadata"],
+        ]
+
+        table.setRowCount(len(meta_data) + len(unit_measurements))
+
+        for row, data in enumerate(meta_data + unit_measurements):
+            for col, value in enumerate(data):
+                item = QTableWidgetItem(str(value))
+                table.setItem(row, col, item)
+
+        # Create a dialog to display the table
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Measurement Summary")
+        layout = QVBoxLayout()
+        layout.addWidget(table)
+
+        export_button = QPushButton("Export to CSV")
+        export_button.clicked.connect(lambda: self.export_to_csv(meta_data, unit_measurements, pixel_measurements))
+        layout.addWidget(export_button)
+
+        dialog.setLayout(layout)
+        dialog.resize(600, 400)
+        dialog.exec()
+
+    def export_to_csv(self, meta_data, unit_measurements, pixel_measurements):
+        name = QFileDialog.getSaveFileName(self, 'Save File', self.image_name[0].split('.', 1)[0])[0]
+        if name:
+            with open(name + '.csv', 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(["Object", "Value", "Value_unit"])
+                writer.writerows(meta_data)
+                writer.writerows(unit_measurements)
+                writer.writerows(pixel_measurements)
+
+            # # Export image
+            # self.iw.fitInView(self.iw.scene.sceneRect(), QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+            # pix = QtGui.QPixmap(self.iw.viewport().size())
+            # self.iw.viewport().render(pix)
+            # pix.save(name + '-measurements.png')
         
     # Export measurements to csv
     # Collect measurements from graphicsview
     def export_measurements(self):
-        # Popup to get user save file input
-        name = QFileDialog.getSaveFileName(
-            self, 'Save File', self.image_name[0].split('.', 1)[0])[0]
-        pixeldim = float(self.subWin.pixeldim.text())
-        altitude = float(self.subWin.altitude.text())
-        focal = float(self.subWin.focal.text())
-
-        if name:
-            meta_data = [["Object","Value","Value_unit"],
-                        ['Image ID',self.subWin.id.text(),"Metadata"],
-                        ['Image Path',self.image_name[0],"Metadata"],
-                        ['Focal Length', focal,"Metadata"],
-                        ['Altitude', altitude,"Metadata"],
-                        ['Pixel Dimension', pixeldim,"Metadata"],
-                        ['Mirror Side', self.subWin.side_bias.currentText(), "Metadata"],
-                        ['Notes', self.subWin.notes.toPlainText(), "Metadata"]]
-
-	        #Write .csv file
-            with open(name + '.csv', 'w', newline='') as csvfile:
-                writer = csv.writer(csvfile)
-
-                writer.writerows(meta_data)     # Writes flight data and metadata
-
-                self.iw.calculate_widths(self.subWin.side_bias.currentText())      # Calculate widths of MovingEllipses at export
-                m = pixeldim * (altitude / focal)
-                pixel_measurements, unit_measurements = self.iw.get_measurement_names_and_values(m)
-                
-                writer.writerows(unit_measurements)
-                writer.writerows(pixel_measurements)
-
-            #Export image
-            self.iw.fitInView(self.iw.scene.sceneRect(), QtCore.Qt.AspectRatioMode.KeepAspectRatio)
-            pix = QtGui.QPixmap(self.iw.viewport().size())
-            self.iw.viewport().render(pix)
-            pix.save(name + '-measurements.png')
+        self.show_measurement_table()
 
 # Crash handler for error logging
 def except_hook(exc_type, exc_value, exc_tb):
