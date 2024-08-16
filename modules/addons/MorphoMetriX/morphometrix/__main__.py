@@ -231,7 +231,7 @@ class MainWindow(QMainWindow):
         self.setCorner(QtCore.Qt.Corner.BottomLeftCorner, QtCore.Qt.DockWidgetArea.LeftDockWidgetArea)
         self.setCorner(QtCore.Qt.Corner.BottomRightCorner, QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.resizeDocks( [docked1], [400], QtCore.Qt.Orientation.Horizontal )
-        self.exportButton = QPushButton("Export Measurements", self)
+        self.exportButton = QPushButton("View Measurements", self)
         self.exportButton.clicked.connect(self.export_measurements)
         self.exportButton.setEnabled(False)
 
@@ -416,9 +416,9 @@ class MainWindow(QMainWindow):
             ['Mirror Side', self.subWin.side_bias.currentText(), "Metadata"],
         ]
 
-        table.setRowCount(len(meta_data) + len(unit_measurements))
+        table.setRowCount(len(unit_measurements))
 
-        for row, data in enumerate(meta_data + unit_measurements):
+        for row, data in enumerate(unit_measurements):
             for col, value in enumerate(data):
                 item = QTableWidgetItem(str(value))
                 table.setItem(row, col, item)
