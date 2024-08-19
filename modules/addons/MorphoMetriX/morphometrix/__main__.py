@@ -208,18 +208,6 @@ class MainWindow(QMainWindow):
         self.subWin = Window(self.iw)
         self.setCentralWidget(self.iw)
 
-        # Set initial values if provided
-        if image_path:
-           self.file_open(image_path)
-        if id:
-            self.subWin.id.setText(str(id))
-        if focal_length:
-            self.subWin.focal.setText(str(focal_length))
-        if altitude:
-            self.subWin.altitude.setText(str(altitude))
-        if pixel_dim:
-            self.subWin.pixeldim.setText(str(pixel_dim))
-
         #Stacked dock widgets
         docked1 = QDockWidget("", self)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, docked1)
@@ -294,6 +282,18 @@ class MainWindow(QMainWindow):
         self.tb.addWidget(self.undoButton)
         self.tb.addWidget(self.bezier)
         self.tb.addWidget(self.piecewise)
+
+         # Set initial values if provided after initialization
+        if image_path:
+           self.file_open(image_path)
+        if id:
+            self.subWin.id.setText(str(id))
+        if focal_length:
+            self.subWin.focal.setText(str(focal_length))
+        if altitude:
+            self.subWin.altitude.setText(str(altitude))
+        if pixel_dim:
+            self.subWin.pixeldim.setText(str(pixel_dim))
 
     # New Project
     # Set all defaults and clear stored values
